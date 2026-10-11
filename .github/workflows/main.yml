@@ -1,0 +1,42 @@
+name: Build MoonTune APK
+
+on:
+  workflow_dispatch:
+  push:
+    paths:
+      - 'MoonTune_Projeto_Corrigido.zip'
+      - '.github/workflows/main.yml'
+
+permissions:
+  contents: read
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Baixar arquivos
+        uses: actions/checkout@v4
+
+      - name: Preparar Java
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '17'
+
+      - name: Extrair projeto
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y unzip wget
+          unzip MoonTune_Projeto_Corrigido.zip -d projeto
+          wget -q https://services.gradle.org/distributions/gradle-8.9-bin.zip
+          unzip -q gradle-8.9-bin.zip
+          echo "$GITHUB_WORKSPACE/gradle-8.9/bin" >> "$GITHUB_PATH"
+
+      - name: Compilar APK
+        run: gradle -p projeto assembleDebug
+
+      - name: Disponibilizar APK
+        uses: actions/upload-artifact@v4
+        with:
+          name: MoonTune-APK
+          path: projeto/app/build/outputs/apk/debug/*.apk
